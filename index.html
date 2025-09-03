@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BClub Monthly Tracker</title>
+  <title>BClub Monthly Playoffs</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,26 +11,10 @@
 
   <form id="resultForm">
     <label for="teamA">Team A:</label>
-    <select id="teamA" required>
-      <option value="">Select Team A</option>
-      <option value="Manoj-Vinoth">Manoj-Vinoth</option>
-      <option value="Suresh-Ramesh">Suresh-Ramesh</option>
-      <option value="Vidya-Rajesh">Vidya-Rajesh</option>
-      <option value="Rahul-Sabari">Rahul-Sabari</option>
-      <option value="Balaji-Venkat">Balaji-Venkat</option>
-      <option value="Senthilvel-Vijay">Senthilvel-Vijay</option>
-    </select>
+    <select id="teamA" required></select>
 
     <label for="teamB">Team B:</label>
-    <select id="teamB" required>
-      <option value="">Select Team B</option>
-      <option value="Ashok-Uday">Ashok-Uday</option>
-      <option value="Hari-Sai">Hari-Sai</option>
-      <option value="Mustafa-Shanu">Mustafa-Shanu</option>
-      <option value="Murali-Hemanth">Murali-Hemanth</option>
-      <option value="Raj-Harsha">Raj-Harsha</option>
-      <option value="Althaf-Ravi">Althaf-Ravi</option>
-    </select>
+    <select id="teamB" required></select>
 
     <label for="teamAPoints">Team A Points:</label>
     <input type="number" id="teamAPoints" required />
@@ -38,21 +22,17 @@
     <label for="teamBPoints">Team B Points:</label>
     <input type="number" id="teamBPoints" required />
 
-    <label for="winner">Winner:</label>
-    <select id="winner" required>
-      <option value="">Select Winner</option>
-      <option value="teamA">Team A</option>
-      <option value="teamB">Team B</option>
-    </select>
-
     <button type="submit">Submit Result</button>
   </form>
 
   <h2>Rankings</h2>
   <div id="rankingsDisplay"></div>
 
-  <h2>Match Matrix</h2>
-  <table id="matchMatrix" border="1"></table>
+  <h2>Playoffs</h2>
+  <button id="startPlayoffs">Start Playoffs</button>
+  <div id="playoffResults"></div>
+
+  <h2 id="finalWinner" style="color: green;"></h2>
 
   <script src="script.js"></script>
 </body>
