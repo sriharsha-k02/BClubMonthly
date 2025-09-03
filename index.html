@@ -2,35 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Badminton Tournament Manager</title>
+  <title>BClub Monthly Tournament</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h1 { color: #2c3e50; }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    h1, h2 { color: #2c3e50; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #eee; }
-    select, button { margin: 5px; padding: 5px; }
+    select, input, button { margin: 5px; padding: 5px; }
+    .form-group { margin-bottom: 10px; }
   </style>
 </head>
 <body>
 
-  <h1>🏸 Monthly Badminton Tournament</h1>
+  <h1>🏸 BClub Monthly Tournament</h1>
 
-  <div>
-  <label>Team A:</label>
-  <select id="teamA"></select>
-  <label>Team B:</label>
-  <select id="teamB"></select><br><br>
+  <div class="form-group">
+    <label>Team A:</label>
+    <select id="teamA"></select>
+    <label>Team B:</label>
+    <select id="teamB"></select>
+  </div>
 
-  <label>Team A Points:</label>
-  <input type="number" id="teamAPoints" min="0">
-  <label>Team B Points:</label>
-  <input type="number" id="teamBPoints" min="0"><br><br>
+  <div class="form-group">
+    <label>Team A Points:</label>
+    <input type="number" id="teamAPoints" min="0">
+    <label>Team B Points:</label>
+    <input type="number" id="teamBPoints" min="0">
+  </div>
 
-  <label>Winner:</label>
-  <select id="winner"></select>
-  <button onclick="submitResult()">Record Result</button>
-</div>
+  <div class="form-group">
+    <label>Winner:</label>
+    <select id="winner"></select>
+    <button onclick="submitResult()">Record Result</button>
+  </div>
 
   <h2>📊 Rankings</h2>
   <table id="rankingTable">
@@ -56,21 +61,17 @@
       rankings[team] = { wins: 0, losses: 0, points: 0 };
     });
 
-   // Generate cross-group matches with point placeholders
-let matches = [];
-groupA.forEach(teamA => {
-  groupB.forEach(teamB => {
-    matches.push({
-      teamA,
-      teamB,
-      winner: null,
-      teamA_points: null,
-      teamB_points: null
+    groupA.forEach(teamA => {
+      groupB.forEach(teamB => {
+        matches.push({
+          teamA,
+          teamB,
+          winner: null,
+          teamA_points: null,
+          teamB_points: null
+        });
+      });
     });
-  });
-});
-
-
 
     function populateDropdowns() {
       const teamASelect = document.getElementById('teamA');
@@ -82,34 +83,34 @@ groupA.forEach(teamA => {
     }
 
     function submitResult() {
-  const teamA = document.getElementById('teamA').value;
-  const teamB = document.getElementById('teamB').value;
-  const winner = document.getElementById('winner').value;
-  const teamAPoints = parseInt(document.getElementById('teamAPoints').value);
-  const teamBPoints = parseInt(document.getElementById('teamBPoints').value);
+      const teamA = document.getElementById('teamA').value;
+      const teamB = document.getElementById('teamB').value;
+      const winner = document.getElementById('winner').value;
+      const teamAPoints = parseInt(document.getElementById('teamAPoints').value);
+      const teamBPoints = parseInt(document.getElementById('teamBPoints').value);
 
-  if (isNaN(teamAPoints) || isNaN(teamBPoints)) {
-    alert('Please enter valid points for both teams.');
-    return;
-  }
+      if (isNaN(teamAPoints) || isNaN(teamBPoints)) {
+        alert('Please enter valid points for both teams.');
+        return;
+      }
 
-  const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
-  if (!match || match.winner) {
-    alert('Match already recorded or not found.');
-    return;
-  }
+      const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
+      if (!match || match.winner) {
+        alert('Match already recorded or not found.');
+        return;
+      }
 
-  match.winner = winner;
-  match.teamA_points = teamAPoints;
-  match.teamB_points = teamBPoints;
+      match.winner = winner;
+      match.teamA_points = teamAPoints;
+      match.teamB_points = teamBPoints;
 
-  const loser = winner === teamA ? teamB : teamA;
-  rankings[winner].wins += 1;
-  rankings[winner].points += 3;
-  rankings[loser].losses += 1;
+      const loser = winner === teamA ? teamB : teamA;
+      rankings[winner].wins += 1;
+      rankings[winner].points += 3;
+      rankings[loser].losses += 1;
 
-  updateRankings();
-}
+      updateRankings();
+    }
 
     function updateRankings() {
       const tbody = document.querySelector('#rankingTable tbody');
