@@ -18,6 +18,7 @@ const teamBSelect = document.getElementById("teamB");
 const resultForm = document.getElementById("resultForm");
 const rankingsTableBody = document.querySelector("#rankingsTable tbody");
 const matchesTableBody = document.querySelector("#matchesTable tbody");
+const playoffInputs = document.getElementById("playoffInputs");
 const playoffResults = document.getElementById("playoffResults");
 const finalWinnerDisplay = document.getElementById("finalWinner");
 
@@ -139,30 +140,24 @@ function updateRankings() {
 
 document.getElementById("startPlayoffs").addEventListener("click", function () {
   const sortedTeams = Object.keys(rankings).sort((a, b) => rankings[b].points - rankings[a].points);
-  const top4 = sortedTeams.slice(0, 4);
+  const [team1, team2, team3, team4] = sortedTeams.slice(0, 4);
 
-  if (top4.length < 4) {
-    alert("Not enough teams to start playoffs.");
-    return;
-  }
-
-  playoffResults.innerHTML = "";
-
-  const [team1, team2, team3, team4] = top4;
-
-  const qualifier1Winner = simulateMatch(team1, team2);
-  const eliminatorWinner = simulateMatch(team3, team4);
-  const qualifier2Winner = simulateMatch(
-    qualifier1Winner === team1 ? team2 : team1,
-    eliminatorWinner
-  );
-  const finalWinner = simulateMatch(qualifier1Winner, qualifier2Winner);
-
-  playoffResults.innerHTML = `
-    <p>Qualifier 1: ${team1} vs ${team2} → Winner: ${qualifier1Winner}</p>
-    <p>Eliminator: ${team3} vs ${team4} → Winner: ${eliminatorWinner}</p>
-    <p>Qualifier 2: ${qualifier1Winner === team1 ? team2 : team1} vs ${eliminatorWinner} → Winner: ${qualifier2Winner}</p>
-    <p><strong>Final: ${qualifier1Winner} vs ${qualifier2Winner} → Winner: ${finalWinner}</strong></p>
+  playoffInputs.innerHTML = `
+    <h3>Enter Playoff Scores</h3>
+    <div>
+      <label>Qualifier 1: ${team1} vs ${team2}</label>
+      <input type="number" id="q1Team1" placeholder="${team1} Score" />
+      <input type="number" id="q1Team2" placeholder="${team2} Score" />
+    </div>
+    <div>
+      <label>Eliminator: ${team3} vs ${team4}</label>
+      <input type="number" id="elimTeam3" placeholder="${team3} Score" />
+      <input type="number" id="elimTeam4" placeholder="${team4} Score" />
+    </div>
+    <button id="submitPlayoffScores">Submit Scores</button>
   `;
 
-  finalWinnerDisplay.textContent = `🏆 Final Winner:
+  document.getElementById("submitPlayoffScores").addEventListener("click", function () {
+    const q1Score1 = parseInt(document.getElementById("q1Team1").value);
+    const q1Score2 = parseInt(document.getElementById("q1Team2").value);
+    const elimScore3 = parseInt(document.getElementById("elimTeam3").
