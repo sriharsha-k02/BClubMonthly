@@ -10,14 +10,14 @@ const teamBList = [
 
 const allTeams = [...teamAList, ...teamBList];
 const rankings = {};
-const playedMatches = new Set();
+const playedMatches = new Map();
 const allMatchups = [];
 
 const teamASelect = document.getElementById("teamA");
 const teamBSelect = document.getElementById("teamB");
 const resultForm = document.getElementById("resultForm");
 const rankingsTableBody = document.querySelector("#rankingsTable tbody");
-const remainingMatchesBody = document.querySelector("#remainingMatches tbody");
+const matchesTableBody = document.querySelector("#matchesTable tbody");
 const playoffResults = document.getElementById("playoffResults");
 const finalWinnerDisplay = document.getElementById("finalWinner");
 
@@ -41,19 +41,38 @@ teamBList.forEach(team => {
 // Generate all valid matchups
 teamAList.forEach(a => {
   teamBList.forEach(b => {
-    allMatchups.push(`${a} vs ${b}`);
+    allMatchups.push({ teamA: a, teamB: b });
   });
 });
 
-function updateRemainingMatches() {
-  remainingMatchesBody.innerHTML = "";
-  allMatchups.forEach(match => {
-    if (!playedMatches.has(match)) {
-      const [a, b] = match.split(" vs ");
-      const row = document.createElement("tr");
-      row.innerHTML = `<td>${a}</td><td>${b}</td>`;
-      remainingMatchesBody.appendChild(row);
+function updateMatchesTable() {
+  matchesTableBody.innerHTML = "";
+
+  const unplayed = [];
+  const played = [];
+
+  allMatchups.forEach(({ teamA, teamB }) => {
+    const key = `${teamA} vs ${teamB}`;
+    if (playedMatches.has(key)) {
+      played.push({ teamA, teamB, ...playedMatches.get(key) });
+    } else {
+      unplayed.push({ teamA, teamB });
     }
+  });
+
+  [...unplayed, ...played].forEach(match => {
+    const row = document.createElement("tr");
+    const score = match.teamAPoints !== undefined
+      ? `${match.teamAPoints} - ${match.teamBPoints}`
+      : "-";
+    const status = match.teamAPoints !== undefined ? "✅ Played" : "❌ Pending";
+    row.innerHTML = `
+      <td>${match.teamA}</td>
+      <td>${match.teamB}</td>
+      <td>${score}</td>
+      <td>${status}</td>
+    `;
+    matchesTableBody.appendChild(row);
   });
 }
 
@@ -71,7 +90,7 @@ resultForm.addEventListener("submit", function (e) {
   }
 
   const matchKey = `${teamA} vs ${teamB}`;
-  if (!allMatchups.includes(matchKey)) {
+  if (!allMatchups.some(m => m.teamA === teamA && m.teamB === teamB)) {
     alert("Invalid matchup. Team A must play Team B.");
     return;
   }
@@ -81,7 +100,7 @@ resultForm.addEventListener("submit", function (e) {
     return;
   }
 
-  playedMatches.add(matchKey);
+  playedMatches.set(matchKey, { teamAPoints, teamBPoints });
 
   rankings[teamA].points += teamAPoints;
   rankings[teamB].points += teamBPoints;
@@ -95,7 +114,7 @@ resultForm.addEventListener("submit", function (e) {
   }
 
   updateRankings();
-  updateRemainingMatches();
+  updateMatchesTable();
   resultForm.reset();
 });
 
@@ -146,13 +165,4 @@ document.getElementById("startPlayoffs").addEventListener("click", function () {
     <p><strong>Final: ${qualifier1Winner} vs ${qualifier2Winner} → Winner: ${finalWinner}</strong></p>
   `;
 
-  finalWinnerDisplay.textContent = `🏆 Final Winner: ${finalWinner}`;
-});
-
-function simulateMatch(teamA, teamB) {
-  return rankings[teamA].points >= rankings[teamB].points ? teamA : teamB;
-}
-
-// Initial render
-updateRankings();
-updateRemainingMatches();
+  finalWinnerDisplay.textContent = `🏆 Final Winner:
