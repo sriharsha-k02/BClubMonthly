@@ -17,14 +17,20 @@
   <h1>🏸 Monthly Badminton Tournament</h1>
 
   <div>
-    <label>Team A:</label>
-    <select id="teamA"></select>
-    <label>Team B:</label>
-    <select id="teamB"></select>
-    <label>Winner:</label>
-    <select id="winner"></select>
-    <button onclick="submitResult()">Record Result</button>
-  </div>
+  <label>Team A:</label>
+  <select id="teamA"></select>
+  <label>Team B:</label>
+  <select id="teamB"></select><br><br>
+
+  <label>Team A Points:</label>
+  <input type="number" id="teamAPoints" min="0">
+  <label>Team B Points:</label>
+  <input type="number" id="teamBPoints" min="0"><br><br>
+
+  <label>Winner:</label>
+  <select id="winner"></select>
+  <button onclick="submitResult()">Record Result</button>
+</div>
 
   <h2>📊 Rankings</h2>
   <table id="rankingTable">
@@ -50,11 +56,21 @@
       rankings[team] = { wins: 0, losses: 0, points: 0 };
     });
 
-    groupA.forEach(teamA => {
-      groupB.forEach(teamB => {
-        matches.push({ teamA, teamB, winner: null });
-      });
+   // Generate cross-group matches with point placeholders
+let matches = [];
+groupA.forEach(teamA => {
+  groupB.forEach(teamB => {
+    matches.push({
+      teamA,
+      teamB,
+      winner: null,
+      teamA_points: null,
+      teamB_points: null
     });
+  });
+});
+
+
 
     function populateDropdowns() {
       const teamASelect = document.getElementById('teamA');
@@ -66,24 +82,34 @@
     }
 
     function submitResult() {
-      const teamA = document.getElementById('teamA').value;
-      const teamB = document.getElementById('teamB').value;
-      const winner = document.getElementById('winner').value;
+  const teamA = document.getElementById('teamA').value;
+  const teamB = document.getElementById('teamB').value;
+  const winner = document.getElementById('winner').value;
+  const teamAPoints = parseInt(document.getElementById('teamAPoints').value);
+  const teamBPoints = parseInt(document.getElementById('teamBPoints').value);
 
-      const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
-      if (!match || match.winner) {
-        alert('Match already recorded or invalid.');
-        return;
-      }
+  if (isNaN(teamAPoints) || isNaN(teamBPoints)) {
+    alert('Please enter valid points for both teams.');
+    return;
+  }
 
-      match.winner = winner;
-      const loser = winner === teamA ? teamB : teamA;
-      rankings[winner].wins += 1;
-      rankings[winner].points += 3;
-      rankings[loser].losses += 1;
+  const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
+  if (!match || match.winner) {
+    alert('Match already recorded or not found.');
+    return;
+  }
 
-      updateRankings();
-    }
+  match.winner = winner;
+  match.teamA_points = teamAPoints;
+  match.teamB_points = teamBPoints;
+
+  const loser = winner === teamA ? teamB : teamA;
+  rankings[winner].wins += 1;
+  rankings[winner].points += 3;
+  rankings[loser].losses += 1;
+
+  updateRankings();
+}
 
     function updateRankings() {
       const tbody = document.querySelector('#rankingTable tbody');
