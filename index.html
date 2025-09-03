@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Badminton Tournament Manager</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h1 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+    select, button { margin: 5px; padding: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>🏸 Monthly Badminton Tournament</h1>
+
+  <div>
+    <label>Team A:</label>
+    <select id="teamA"></select>
+    <label>Team B:</label>
+    <select id="teamB"></select>
+    <label>Winner:</label>
+    <select id="winner"></select>
+    <button onclick="submitResult()">Record Result</button>
+  </div>
+
+  <h2>📊 Rankings</h2>
+  <table id="rankingTable">
+    <thead>
+      <tr><th>Team</th><th>Wins</th><th>Losses</th><th>Points</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>🏆 Playoffs</h2>
+  <button onclick="showPlayoffs()">Simulate Playoffs</button>
+  <div id="playoffResults"></div>
+
+  <script>
+    const groupA = ['Team A1', 'Team A2', 'Team A3', 'Team A4', 'Team A5', 'Team A6'];
+    const groupB = ['Team B1', 'Team B2', 'Team B3', 'Team B4', 'Team B5', 'Team B6'];
+    const teams = [...groupA, ...groupB];
+
+    let rankings = {};
+    let matches = [];
+
+    teams.forEach(team => {
+      rankings[team] = { wins: 0, losses: 0, points: 0 };
+    });
+
+    groupA.forEach(teamA => {
+      groupB.forEach(teamB => {
+        matches.push({ teamA, teamB, winner: null });
+      });
+    });
+
+    function populateDropdowns() {
+      const teamASelect = document.getElementById('teamA');
+      const teamBSelect = document.getElementById('teamB');
+      const winnerSelect = document.getElementById('winner');
+      groupA.forEach(team => teamASelect.innerHTML += `<option value="${team}">${team}</option>`);
+      groupB.forEach(team => teamBSelect.innerHTML += `<option value="${team}">${team}</option>`);
+      teams.forEach(team => winnerSelect.innerHTML += `<option value="${team}">${team}</option>`);
+    }
+
+    function submitResult() {
+      const teamA = document.getElementById('teamA').value;
+      const teamB = document.getElementById('teamB').value;
+      const winner = document.getElementById('winner').value;
+
+      const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
+      if (!match || match.winner) {
+        alert('Match already recorded or invalid.');
+        return;
+      }
+
+      match.winner = winner;
+      const loser = winner === teamA ? teamB : teamA;
+      rankings[winner].wins += 1;
+      rankings[winner].points += 3;
+      rankings[loser].losses += 1;
+
+      updateRankings();
+    }
+
+    function updateRankings() {
+      const tbody = document.querySelector('#rankingTable tbody');
+      tbody.innerHTML = '';
+      Object.entries(rankings)
+        .sort((a, b) => b[1].points - a[1].points)
+        .forEach(([team, stats]) => {
+          tbody.innerHTML += `<tr><td>${team}</td><td>${stats.wins}</td><td>${stats.losses}</td><td>${stats.points}</td></tr>`;
+        });
+    }
+
+    function showPlayoffs() {
+      const topTeams = Object.entries(rankings)
+        .sort((a, b) => b[1].points - a[1].points)
+        .slice(0, 4)
+        .map(entry => entry[0]);
+
+      const [t1, t2, t3, t4] = topTeams;
+      const q1Winner = t1;
+      const q1Loser = t2;
+      const elimWinner = t3;
+      const q2Winner = elimWinner;
+
+      const finalMatch = `${q1Winner} vs ${q2Winner}`;
+      document.getElementById('playoffResults').innerHTML = `
+        <p>Qualifier 1: ${t1} vs ${t2} → Winner: ${q1Winner}</p>
+        <p>Eliminator: ${t3} vs ${t4} → Winner: ${elimWinner}</p>
+        <p>Qualifier 2: ${q1Loser} vs ${elimWinner} → Winner: ${q2Winner}</p>
+        <p><strong>Final: ${finalMatch}</strong></p>
+      `;
+    }
+
+    populateDropdowns();
+    updateRankings();
+  </script>
+
+</body>
+</html>
