@@ -3,36 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BClub Monthly Playoffs</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>BClub Monthly Tournament</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>BClub Monthly Game Tracker</h1>
+  <div class="container">
+    <h1>BClub Monthly Tournament</h1>
 
-  <form id="resultForm">
-    <label for="teamA">Team A:</label>
-    <select id="teamA" required></select>
+    <form id="resultForm">
+      <div class="form-group">
+        <label for="teamA">Team A:</label>
+        <select id="teamA" required></select>
+      </div>
 
-    <label for="teamB">Team B:</label>
-    <select id="teamB" required></select>
+      <div class="form-group">
+        <label for="teamB">Team B:</label>
+        <select id="teamB" required></select>
+      </div>
 
-    <label for="teamAPoints">Team A Points:</label>
-    <input type="number" id="teamAPoints" required />
+      <div class="form-group">
+        <label for="teamAPoints">Team A Points:</label>
+        <input type="number" id="teamAPoints" required />
+      </div>
 
-    <label for="teamBPoints">Team B Points:</label>
-    <input type="number" id="teamBPoints" required />
+      <div class="form-group">
+        <label for="teamBPoints">Team B Points:</label>
+        <input type="number" id="teamBPoints" required />
+      </div>
 
-    <button type="submit">Submit Result</button>
-  </form>
+      <button type="submit">Submit Result</button>
+    </form>
 
-  <h2>Rankings</h2>
-  <div id="rankingsDisplay"></div>
+    <h2>Rankings</h2>
+    <div id="rankingsDisplay" class="scoreboard"></div>
 
-  <h2>Playoffs</h2>
-  <button id="startPlayoffs">Start Playoffs</button>
-  <div id="playoffResults"></div>
+    <h2>Playoffs</h2>
+    <button id="startPlayoffs">Start Playoffs</button>
+    <div id="playoffResults"></div>
 
-  <h2 id="finalWinner" style="color: green;"></h2>
+    <h2 id="finalWinner" class="winner"></h2>
+  </div>
 
   <script src="script.js"></script>
 </body>
