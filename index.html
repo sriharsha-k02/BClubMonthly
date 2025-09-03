@@ -1,151 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BClub Monthly Tournament</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-    h1, h2 { color: #2c3e50; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #eee; }
-    select, input, button { margin: 5px; padding: 5px; }
-    .form-group { margin-bottom: 10px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BClub Monthly Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <h1>BClub Monthly Game Tracker</h1>
 
-  <h1>🏸 BClub Monthly Tournament</h1>
+  <form id="resultForm">
+    <label for="teamA">Team A:</label>
+    <input type="text" id="teamA" required />
 
-  <div class="form-group">
-    <label>Team A:</label>
-    <select id="teamA"></select>
-    <label>Team B:</label>
-    <select id="teamB"></select>
-  </div>
+    <label for="teamB">Team B:</label>
+    <input type="text" id="teamB" required />
 
-  <div class="form-group">
-    <label>Team A Points:</label>
-    <input type="number" id="teamAPoints" min="0">
-    <label>Team B Points:</label>
-    <input type="number" id="teamBPoints" min="0">
-  </div>
+    <label for="teamAPoints">Team A Points:</label>
+    <input type="number" id="teamAPoints" required />
 
-  <div class="form-group">
-    <label>Winner:</label>
-    <select id="winner"></select>
-    <button onclick="submitResult()">Record Result</button>
-  </div>
+    <label for="teamBPoints">Team B Points:</label>
+    <input type="number" id="teamBPoints" required />
 
-  <h2>📊 Rankings</h2>
-  <table id="rankingTable">
-    <thead>
-      <tr><th>Team</th><th>Wins</th><th>Losses</th><th>Points</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <label for="winner">Winner:</label>
+    <select id="winner" required>
+      <option value="">Select Winner</option>
+      <option value="teamA">Team A</option>
+      <option value="teamB">Team B</option>
+    </select>
 
-  <h2>🏆 Playoffs</h2>
-  <button onclick="showPlayoffs()">Simulate Playoffs</button>
-  <div id="playoffResults"></div>
+    <button type="submit">Submit Result</button>
+  </form>
 
-  <script>
-    const groupA = ['Team A1', 'Team A2', 'Team A3', 'Team A4', 'Team A5', 'Team A6'];
-    const groupB = ['Team B1', 'Team B2', 'Team B3', 'Team B4', 'Team B5', 'Team B6'];
-    const teams = [...groupA, ...groupB];
+  <h2>Rankings</h2>
+  <div id="rankingsDisplay"></div>
 
-    let rankings = {};
-    let matches = [];
-
-    teams.forEach(team => {
-      rankings[team] = { wins: 0, losses: 0, points: 0 };
-    });
-
-    groupA.forEach(teamA => {
-      groupB.forEach(teamB => {
-        matches.push({
-          teamA,
-          teamB,
-          winner: null,
-          teamA_points: null,
-          teamB_points: null
-        });
-      });
-    });
-
-    function populateDropdowns() {
-      const teamASelect = document.getElementById('teamA');
-      const teamBSelect = document.getElementById('teamB');
-      const winnerSelect = document.getElementById('winner');
-      groupA.forEach(team => teamASelect.innerHTML += `<option value="${team}">${team}</option>`);
-      groupB.forEach(team => teamBSelect.innerHTML += `<option value="${team}">${team}</option>`);
-      teams.forEach(team => winnerSelect.innerHTML += `<option value="${team}">${team}</option>`);
-    }
-
-    function submitResult() {
-      const teamA = document.getElementById('teamA').value;
-      const teamB = document.getElementById('teamB').value;
-      const winner = document.getElementById('winner').value;
-      const teamAPoints = parseInt(document.getElementById('teamAPoints').value);
-      const teamBPoints = parseInt(document.getElementById('teamBPoints').value);
-
-      if (isNaN(teamAPoints) || isNaN(teamBPoints)) {
-        alert('Please enter valid points for both teams.');
-        return;
-      }
-
-      const match = matches.find(m => m.teamA === teamA && m.teamB === teamB);
-      if (!match || match.winner) {
-        alert('Match already recorded or not found.');
-        return;
-      }
-
-      match.winner = winner;
-      match.teamA_points = teamAPoints;
-      match.teamB_points = teamBPoints;
-
-      const loser = winner === teamA ? teamB : teamA;
-      rankings[winner].wins += 1;
-      rankings[winner].points += 3;
-      rankings[loser].losses += 1;
-
-      updateRankings();
-    }
-
-    function updateRankings() {
-      const tbody = document.querySelector('#rankingTable tbody');
-      tbody.innerHTML = '';
-      Object.entries(rankings)
-        .sort((a, b) => b[1].points - a[1].points)
-        .forEach(([team, stats]) => {
-          tbody.innerHTML += `<tr><td>${team}</td><td>${stats.wins}</td><td>${stats.losses}</td><td>${stats.points}</td></tr>`;
-        });
-    }
-
-    function showPlayoffs() {
-      const topTeams = Object.entries(rankings)
-        .sort((a, b) => b[1].points - a[1].points)
-        .slice(0, 4)
-        .map(entry => entry[0]);
-
-      const [t1, t2, t3, t4] = topTeams;
-      const q1Winner = t1;
-      const q1Loser = t2;
-      const elimWinner = t3;
-      const q2Winner = elimWinner;
-
-      const finalMatch = `${q1Winner} vs ${q2Winner}`;
-      document.getElementById('playoffResults').innerHTML = `
-        <p>Qualifier 1: ${t1} vs ${t2} → Winner: ${q1Winner}</p>
-        <p>Eliminator: ${t3} vs ${t4} → Winner: ${elimWinner}</p>
-        <p>Qualifier 2: ${q1Loser} vs ${elimWinner} → Winner: ${q2Winner}</p>
-        <p><strong>Final: ${finalMatch}</strong></p>
-      `;
-    }
-
-    populateDropdowns();
-    updateRankings();
-  </script>
-
+  <!-- Link to external JavaScript -->
+  <script src="script.js"></script>
 </body>
 </html>
