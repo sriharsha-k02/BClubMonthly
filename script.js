@@ -11,27 +11,51 @@ const teamBList = [
 const allTeams = [...teamAList, ...teamBList];
 const rankings = {};
 const playedMatches = new Set();
+const allMatchups = [];
 
 const teamASelect = document.getElementById("teamA");
 const teamBSelect = document.getElementById("teamB");
 const resultForm = document.getElementById("resultForm");
-const rankingsDisplay = document.getElementById("rankingsDisplay");
+const rankingsTableBody = document.querySelector("#rankingsTable tbody");
+const remainingMatchesBody = document.querySelector("#remainingMatches tbody");
 const playoffResults = document.getElementById("playoffResults");
 const finalWinnerDisplay = document.getElementById("finalWinner");
 
-allTeams.forEach(team => {
-  const optionA = document.createElement("option");
-  optionA.value = team;
-  optionA.textContent = team;
-  teamASelect.appendChild(optionA);
-
-  const optionB = document.createElement("option");
-  optionB.value = team;
-  optionB.textContent = team;
-  teamBSelect.appendChild(optionB);
-
+// Initialize dropdowns and rankings
+teamAList.forEach(team => {
+  const option = document.createElement("option");
+  option.value = team;
+  option.textContent = team;
+  teamASelect.appendChild(option);
   rankings[team] = { wins: 0, losses: 0, points: 0 };
 });
+
+teamBList.forEach(team => {
+  const option = document.createElement("option");
+  option.value = team;
+  option.textContent = team;
+  teamBSelect.appendChild(option);
+  rankings[team] = { wins: 0, losses: 0, points: 0 };
+});
+
+// Generate all valid matchups
+teamAList.forEach(a => {
+  teamBList.forEach(b => {
+    allMatchups.push(`${a} vs ${b}`);
+  });
+});
+
+function updateRemainingMatches() {
+  remainingMatchesBody.innerHTML = "";
+  allMatchups.forEach(match => {
+    if (!playedMatches.has(match)) {
+      const [a, b] = match.split(" vs ");
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${a}</td><td>${b}</td>`;
+      remainingMatchesBody.appendChild(row);
+    }
+  });
+}
 
 resultForm.addEventListener("submit", function (e) {
   e.preventDefault();
@@ -47,6 +71,11 @@ resultForm.addEventListener("submit", function (e) {
   }
 
   const matchKey = `${teamA} vs ${teamB}`;
+  if (!allMatchups.includes(matchKey)) {
+    alert("Invalid matchup. Team A must play Team B.");
+    return;
+  }
+
   if (playedMatches.has(matchKey)) {
     alert("This match has already been played.");
     return;
@@ -66,19 +95,26 @@ resultForm.addEventListener("submit", function (e) {
   }
 
   updateRankings();
+  updateRemainingMatches();
   resultForm.reset();
 });
 
 function updateRankings() {
-  rankingsDisplay.innerHTML = "";
+  rankingsTableBody.innerHTML = "";
 
   const sorted = Object.keys(rankings).sort((a, b) => rankings[b].points - rankings[a].points);
 
   sorted.forEach((team, index) => {
     const { wins, losses, points } = rankings[team];
-    const div = document.createElement("div");
-    div.textContent = `${index + 1}. ${team} — Wins: ${wins}, Losses: ${losses}, Points: ${points}`;
-    rankingsDisplay.appendChild(div);
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${team}</td>
+      <td>${wins}</td>
+      <td>${losses}</td>
+      <td>${points}</td>
+    `;
+    rankingsTableBody.appendChild(row);
   });
 }
 
@@ -116,3 +152,7 @@ document.getElementById("startPlayoffs").addEventListener("click", function () {
 function simulateMatch(teamA, teamB) {
   return rankings[teamA].points >= rankings[teamB].points ? teamA : teamB;
 }
+
+// Initial render
+updateRankings();
+updateRemainingMatches();
