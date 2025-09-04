@@ -150,87 +150,87 @@ document.addEventListener("DOMContentLoaded", () => {
     populateTeamB();
   });
 
-  // Playoffs: Qualifier 1 → Eliminator → Qualifier 2 → Final
-  startPlayoffsBtn.addEventListener("click", () => {
-    playoffInputs.innerHTML = "";
-    playoffResults.innerHTML = "";
-    finalWinnerDisplay.textContent = "";
+ startPlayoffsBtn.addEventListener("click", () => {
+  playoffInputs.innerHTML = "";
+  playoffResults.innerHTML = "";
+  finalWinnerDisplay.textContent = "";
 
-    const sortedTeams = Object.keys(rankings)
-      .sort((a, b) => rankings[b].points - rankings[a].points);
-    const top4 = sortedTeams.slice(0, 4);
+  const sortedTeams = Object.keys(rankings)
+    .sort((a, b) => rankings[b].points - rankings[a].points);
+  const [team1, team2, team3, team4] = sortedTeams.slice(0, 4);
 
-    const qualifier1 = { teamA: top4[0], teamB: top4[1] };
-    const eliminator = { teamA: top4[2], teamB: top4[3] };
+  // Qualifier 1
+  playoffInputs.innerHTML += `
+    <h3>Qualifier 1: ${team1} vs ${team2}</h3>
+    <label>${team1} Score:</label><input type="number" id="q1A" min="0" />
+    <label>${team2} Score:</label><input type="number" id="q1B" min="0" />
+  `;
 
-    playoffInputs.innerHTML += `
-      <h3>Qualifier 1: ${qualifier1.teamA} vs ${qualifier1.teamB}</h3>
-      <input type="number" id="q1A" placeholder="${qualifier1.teamA} score" min="0" required>
-      <input type="number" id="q1B" placeholder="${qualifier1.teamB} score" min="0" required>
+  // Eliminator
+  playoffInputs.innerHTML += `
+    <h3>Eliminator: ${team3} vs ${team4}</h3>
+    <label>${team3} Score:</label><input type="number" id="elimA" min="0" />
+    <label>${team4} Score:</label><input type="number" id="elimB" min="0" />
+  `;
 
-      <h3>Eliminator: ${eliminator.teamA} vs ${eliminator.teamB}</h3>
-      <input type="number" id="elimA" placeholder="${eliminator.teamA} score" min="0" required>
-      <input type="number" id="elimB" placeholder="${eliminator.teamB} score" min="0" required>
+  function checkStage1() {
+    const q1A = parseInt(document.getElementById("q1A").value);
+    const q1B = parseInt(document.getElementById("q1B").value);
+    const elimA = parseInt(document.getElementById("elimA").value);
+    const elimB = parseInt(document.getElementById("elimB").value);
+
+    if ([q1A, q1B, elimA, elimB].some(isNaN)) return;
+
+    const q1Winner = q1A > q1B ? team1 : team2;
+    const q1Loser = q1A > q1B ? team2 : team1;
+    const elimWinner = elimA > elimB ? team3 : team4;
+
+    renderQualifier2(q1Loser, elimWinner, q1Winner);
+  }
+
+  document.getElementById("q1A").addEventListener("input", checkStage1);
+  document.getElementById("q1B").addEventListener("input", checkStage1);
+  document.getElementById("elimA").addEventListener("input", checkStage1);
+  document.getElementById("elimB").addEventListener("input", checkStage1);
+
+  function renderQualifier2(q2TeamA, q2TeamB, q1Winner) {
+    playoffResults.innerHTML = `
+      <h3>Qualifier 2: ${q2TeamA} vs ${q2TeamB}</h3>
+      <label>${q2TeamA} Score:</label><input type="number" id="q2A" min="0" />
+      <label>${q2TeamB} Score:</label><input type="number" id="q2B" min="0" />
     `;
 
-    const submitStage1 = document.createElement("button");
-    submitStage1.textContent = "Submit Q1 & Eliminator";
-    playoffInputs.appendChild(submitStage1);
+    function checkQ2() {
+      const q2A = parseInt(document.getElementById("q2A").value);
+      const q2B = parseInt(document.getElementById("q2B").value);
+      if (isNaN(q2A) || isNaN(q2B)) return;
 
-    submitStage1.addEventListener("click", () => {
-      const q1A = parseInt(document.getElementById("q1A").value);
-      const q1B = parseInt(document.getElementById("q1B").value);
-      const elimA = parseInt(document.getElementById("elimA").value);
-      const elimB = parseInt(document.getElementById("elimB").value);
+      const q2Winner = q2A > q2B ? q2TeamA : q2TeamB;
+      renderFinal(q1Winner, q2Winner);
+    }
 
-      if ([q1A, q1B, elimA, elimB].some(isNaN)) {
-        alert("Please enter all scores for Q1 and Eliminator.");
-        return;
-      }
+    document.getElementById("q2A").addEventListener("input", checkQ2);
+    document.getElementById("q2B").addEventListener("input", checkQ2);
+  }
 
-      const q1Winner = q1A > q1B ? qualifier1.teamA : qualifier1.teamB;
-      const q1Loser = q1A > q1B ? qualifier1.teamB : qualifier1.teamA;
-      const elimWinner = elimA > elimB ? eliminator.teamA : eliminator.teamB;
+  function renderFinal(finalTeamA, finalTeamB) {
+    playoffResults.innerHTML += `
+      <h3>Final: ${finalTeamA} vs ${finalTeamB}</h3>
+      <label>${finalTeamA} Score:</label><input type="number" id="finalA" min="0" />
+      <label>${finalTeamB} Score:</label><input type="number" id="finalB" min="0" />
+    `;
 
-      playoffResults.innerHTML = `
-        <h3>Qualifier 2: ${q1Loser} vs ${elimWinner}</h3>
-        <input type="number" id="q2A" placeholder="${q1Loser} score" min="0" required>
-        <input type="number" id="q2B" placeholder="${elimWinner} score" min="0" required>
-        <button id="submitQ2">Submit Q2</button>
-      `;
+    function checkFinal() {
+      const finalA = parseInt(document.getElementById("finalA").value);
+      const finalB = parseInt(document.getElementById("finalB").value);
+      if (isNaN(finalA) || isNaN(finalB)) return;
 
-           document.getElementById("submitQ2").addEventListener("click", () => {
-        const q2A = parseInt(document.getElementById("q2A").value);
-        const q2B = parseInt(document.getElementById("q2B").value);
+      const champion = finalA > finalB ? finalTeamA : finalTeamB;
+      finalWinnerDisplay.textContent = `🏆 Champion: ${champion}`;
+    }
 
-        if (isNaN(q2A) || isNaN(q2B)) {
-          alert("Please enter scores for Qualifier 2.");
-          return;
-        }
-
-        const q2Winner = q2A > q2B ? q1Loser : elimWinner;
-
-        // Final match
-        playoffResults.innerHTML += `
-          <h3>Final: ${q1Winner} vs ${q2Winner}</h3>
-          <input type="number" id="finalA" placeholder="${q1Winner} score" min="0" required>
-          <input type="number" id="finalB" placeholder="${q2Winner} score" min="0" required>
-          <button id="submitFinal">Submit Final</button>
-        `;
-
-        document.getElementById("submitFinal").addEventListener("click", () => {
-          const finalA = parseInt(document.getElementById("finalA").value);
-          const finalB = parseInt(document.getElementById("finalB").value);
-
-          if (isNaN(finalA) || isNaN(finalB)) {
-            alert("Please enter scores for the Final.");
-            return;
-          }
-
-          const champion = finalA > finalB ? q1Winner : q2Winner;
-          finalWinnerDisplay.textContent = `🏆 Champion: ${champion}`;
-        });
-      });
-    });
-  });
+    document.getElementById("finalA").addEventListener("input", checkFinal);
+    document.getElementById("finalB").addEventListener("input", checkFinal);
+  }
+});
 });
