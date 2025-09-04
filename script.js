@@ -11,8 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const rankings = {};
   const playedMatches = new Map();
-  const headToHeadRecords = new Map(); // Track head-to-head results
-  const tieBreakerNeeded = new Set(); // Track teams that need tie breaker matches
+  const headToHeadRecords = new Map();
   const allMatchups = [];
 
   const teamASelect = document.getElementById("teamA");
@@ -114,19 +113,90 @@ document.addEventListener("DOMContentLoaded", () => {
       if (haveTeamsPlayed(a, b)) {
         const h2h = getHeadToHead(a, b);
         if (h2h.team1Wins !== h2h.team2Wins) {
-          return h2h.team2Wins - h2h.team1Wins; // Return negative for team a advantage
+          return h2h.team2Wins - h2h.team1Wins;
         }
-      }
-      
-      // 4. If no head-to-head or tied head-to-head, mark for tie breaker
-      if (aStats.wins === bStats.wins && aStats.points === bStats.points) {
-        tieBreakerNeeded.add(a);
-        tieBreakerNeeded.add(b);
       }
       
       // For now, maintain alphabetical order for teams needing tie breaker
       return a.localeCompare(b);
     });
+  }
+
+  // Find teams that need tie breakers for Top 4 qualification ONLY
+  function findTop4TieBreakers() {
+    const allTeams = Object.keys(rankings);
+    const sortedTeams = sortTeamsByRanking(allTeams);
+    const tieBreakers = [];
+    
+    // Only check positions that could affect Top 4 (positions 1-6 realistically)
+    for (let pos = 0; pos < Math.min(6, sortedTeams.length); pos++) {
+      const currentTeam = sortedTeams[pos];
+      const tiedTeams = [currentTeam];
+      
+      // Find all teams tied with current team
+      for (let i = pos + 1; i < sortedTeams.length; i++) {
+        const compareTeam = sortedTeams[i];
+        if (rankings[currentTeam].wins === rankings[compareTeam].wins && 
+            rankings[currentTeam].points === rankings[compareTeam].points) {
+          
+          // Check if they have head-to-head record
+          if (!haveTeamsPlayed(currentTeam, compareTeam)) {
+            tiedTeams.push(compareTeam);
+          } else {
+            const h2h = getHeadToHead(currentTeam, compareTeam);
+            if (h2h.team1Wins === h2h.team2Wins) {
+              tiedTeams.push(compareTeam);
+            }
+          }
+        } else {
+          break; // No more tied teams
+        }
+      }
+      
+      // ONLY add tie breakers if the tie affects Top 4 qualification
+      if (tiedTeams.length > 1) {
+        const positions = tiedTeams.map(team => sortedTeams.indexOf(team));
+        const maxPos = Math.max(...positions);
+        const minPos = Math.min(...positions);
+        
+        // Check if this tie affects Top 4 qualification or ranking within Top 4
+        const affectsTop4 = (minPos < 4 && maxPos >= 4) || // Crosses Top 4 boundary
+                           (minPos < 4 && maxPos < 4);      // Both in Top 4, need position ranking
+        
+        if (affectsTop4) {
+          let positionText;
+          if (minPos < 4 && maxPos >= 4) {
+            // This tie determines who gets into Top 4
+            positionText = "4th place qualification";
+          } else {
+            // Both teams are in Top 4, determining exact positions
+            positionText = `${minPos + 1}${getOrdinalSuffix(minPos + 1)}-${maxPos + 1}${getOrdinalSuffix(maxPos + 1)} place`;
+          }
+          
+          tieBreakers.push({
+            teams: tiedTeams,
+            position: positionText,
+            minPos: minPos,
+            maxPos: maxPos
+          });
+        }
+        
+        // Skip ahead past all tied teams
+        pos = maxPos;
+      }
+    }
+    
+    return tieBreakers;
+  }
+
+  function getOrdinalSuffix(num) {
+    if (num >= 11 && num <= 13) return "th";
+    switch (num % 10) {
+      case 1: return "st";
+      case 2: return "nd";
+      case 3: return "rd";
+      default: return "th";
+    }
   }
 
   function updateMatchesTable() {
@@ -137,7 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     allMatchups.forEach(({ teamA, teamB }) => {
       const key = `${teamA} vs ${teamB}`;
       if (playedMatches.has(key)) {
-        played.push({ teamA, teamB, ...playedMatches.get(key) });
+        played.push({ teamA, teamB, ...playedMatches.get(key), matchKey: key });
       } else {
         unplayed.push({ teamA, teamB });
       }
@@ -149,11 +219,18 @@ document.addEventListener("DOMContentLoaded", () => {
         ? `${match.teamAPoints} - ${match.teamBPoints}`
         : "-";
       const status = match.teamAPoints !== undefined ? "✅ Played" : "❌ Pending";
+      
+      // Add re-enter button for played matches (but not tie breaker matches)
+      const actionButton = (match.teamAPoints !== undefined && !match.isTieBreaker) 
+        ? `<button onclick="reEnterMatch('${match.matchKey}')" class="re-enter-btn">Re-enter</button>`
+        : "";
+      
       row.innerHTML = `
         <td>${match.teamA}</td>
         <td>${match.teamB}</td>
         <td>${score}</td>
-        <td>${status}</td>
+        <td class="${match.teamAPoints !== undefined ? 'status-played' : 'status-pending'}">${status}</td>
+        <td>${actionButton}</td>
       `;
       matchesTableBody.appendChild(row);
     });
@@ -161,17 +238,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateRankings() {
     rankingsTableBody.innerHTML = "";
-    tieBreakerNeeded.clear(); // Reset tie breaker tracking
     
     const allTeams = Object.keys(rankings);
     const sortedTeams = sortTeamsByRanking(allTeams);
+    
+    // Find Top 4 tie breakers
+    const top4TieBreakers = findTop4TieBreakers();
+    const teamsNeedingTieBreakers = new Set();
+    top4TieBreakers.forEach(tb => tb.teams.forEach(team => teamsNeedingTieBreakers.add(team)));
     
     sortedTeams.forEach((team, index) => {
       const { wins, losses, points } = rankings[team];
       const row = document.createElement("tr");
       
-      // Add visual indicator if tie breaker is needed
-      const tieBreakerIndicator = tieBreakerNeeded.has(team) ? " ⚠️" : "";
+      // Highlight Top 4 teams
+      if (index < 4) {
+        row.classList.add("top-4");
+      }
+      
+      // Add visual indicator if tie breaker is needed for Top 4
+      const tieBreakerIndicator = teamsNeedingTieBreakers.has(team) ? " ⚠️" : "";
       
       row.innerHTML = `
         <td>${index + 1}</td>
@@ -183,28 +269,120 @@ document.addEventListener("DOMContentLoaded", () => {
       rankingsTableBody.appendChild(row);
     });
     
-    // Show tie breaker message if needed
-    if (tieBreakerNeeded.size > 0) {
-      const tieBreakerTeams = Array.from(tieBreakerNeeded).join(", ");
-      console.log(`Tie breaker matches needed between: ${tieBreakerTeams}`);
-      
-      // You could add a visual notification here
-      const notification = document.createElement("div");
-      notification.style.cssText = "background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px;";
-      notification.innerHTML = `<strong>⚠️ Tie Breaker Needed:</strong> Teams marked with ⚠️ have identical records and need additional matches to determine final ranking.`;
-      
-      // Remove any existing notifications
-      const existingNotification = document.querySelector('.tie-breaker-notification');
-      if (existingNotification) existingNotification.remove();
-      
-      notification.classList.add('tie-breaker-notification');
-      rankingsTableBody.parentElement.parentElement.insertBefore(notification, rankingsTableBody.parentElement.parentElement.querySelector('h2:nth-of-type(3)'));
-    } else {
-      // Remove notification if no tie breakers needed
-      const existingNotification = document.querySelector('.tie-breaker-notification');
-      if (existingNotification) existingNotification.remove();
-    }
+    // Create tie breaker matches section
+    updateTieBreakerMatches(top4TieBreakers);
   }
+
+  function updateTieBreakerMatches(tieBreakers) {
+    // Remove existing tie breaker section
+    const existingSection = document.querySelector('.tie-breaker-section');
+    if (existingSection) existingSection.remove();
+    
+    if (tieBreakers.length === 0) return;
+    
+    // Create tie breaker section
+    const tieBreakerSection = document.createElement("div");
+    tieBreakerSection.className = "tie-breaker-section";
+    
+    let sectionHTML = `<h3 style="margin-top: 0;">🏆 Top 4 Tie Breaker Matches</h3>`;
+    
+    tieBreakers.forEach((tieBreaker, index) => {
+      sectionHTML += `<div class="tie-breaker-match">`;
+      sectionHTML += `<h4>Tie Breaker for ${tieBreaker.position}</h4>`;
+      sectionHTML += `<p><strong>Teams:</strong> ${tieBreaker.teams.join(" vs ")}</p>`;
+      
+      // Create match input for each pair of tied teams
+      if (tieBreaker.teams.length === 2) {
+        const [team1, team2] = tieBreaker.teams;
+        sectionHTML += `
+          <div class="tie-breaker-inputs">
+            <div>
+              <label>${team1} Points:</label>
+              <input type="number" id="tb_${index}_${team1.replace(/[^a-zA-Z0-9]/g, '_')}" min="0" />
+            </div>
+            <div>
+              <label>${team2} Points:</label>
+              <input type="number" id="tb_${index}_${team2.replace(/[^a-zA-Z0-9]/g, '_')}" min="0" />
+            </div>
+          </div>
+          <button onclick="processTieBreaker(${index}, ['${team1}', '${team2}'])" class="tie-breaker-submit">Submit Tie Breaker</button>
+        `;
+      } else if (tieBreaker.teams.length > 2) {
+        // For more than 2 teams, create mini-tournament structure
+        sectionHTML += `<p style="color: #666; font-style: italic;">Multiple teams tied - mini round-robin needed</p>`;
+        tieBreaker.teams.forEach((team, teamIndex) => {
+          sectionHTML += `
+            <div style="margin: 5px 0;">
+              <label>${team} Total Tie Breaker Points:</label>
+              <input type="number" id="tb_${index}_${team.replace(/[^a-zA-Z0-9]/g, '_')}" min="0" style="width: 200px; padding: 5px;" />
+            </div>
+          `;
+        });
+        sectionHTML += `<button onclick="processTieBreaker(${index}, ${JSON.stringify(tieBreaker.teams).replace(/"/g, "'")})" class="tie-breaker-submit">Submit Tie Breaker Results</button>`;
+      }
+      
+      sectionHTML += `</div>`;
+    });
+    
+    tieBreakerSection.innerHTML = sectionHTML;
+    
+    // Insert after rankings table
+    const rankingsSection = rankingsTableBody.parentElement.parentElement;
+    rankingsSection.parentNode.insertBefore(tieBreakerSection, rankingsSection.nextSibling);
+  }
+
+  // Global function to re-enter match results
+  window.reEnterMatch = function(matchKey) {
+    const match = playedMatches.get(matchKey);
+    if (!match || match.isTieBreaker) {
+      alert('Cannot re-enter this match');
+      return;
+    }
+    
+    const [teamAName, teamBName] = matchKey.split(' vs ');
+    
+    // Show confirmation dialog
+    const confirmReenter = confirm(`Re-enter the match: ${teamAName} vs ${teamBName}\nCurrent score: ${match.teamAPoints} - ${match.teamBPoints}\n\nThis will remove the current result. Continue?`);
+    
+    if (!confirmReenter) return;
+    
+    // Reverse the previous result
+    rankings[teamAName].points -= match.teamAPoints;
+    rankings[teamBName].points -= match.teamBPoints;
+    
+    if (match.teamAPoints > match.teamBPoints) {
+      rankings[teamAName].wins -= 1;
+      rankings[teamBName].losses -= 1;
+    } else if (match.teamBPoints > match.teamAPoints) {
+      rankings[teamBName].wins -= 1;
+      rankings[teamAName].losses -= 1;
+    }
+    
+    // Remove the match from played matches
+    playedMatches.delete(matchKey);
+    
+    // Pre-populate the form with the teams
+    teamASelect.value = teamAName;
+    populateTeamB(teamAName);
+    teamBSelect.value = teamBName;
+    
+    // Pre-populate with previous scores for reference
+    document.getElementById("teamAPoints").value = match.teamAPoints;
+    document.getElementById("teamBPoints").value = match.teamBPoints;
+    
+    // Update displays
+    updateRankings();
+    updateMatchesTable();
+    
+    // Scroll to form and highlight it
+    resultForm.scrollIntoView({ behavior: 'smooth' });
+    resultForm.classList.add('form-highlighted');
+    setTimeout(() => {
+      resultForm.classList.remove('form-highlighted');
+    }, 3000);
+    
+    alert(`Match ${teamAName} vs ${teamBName} has been removed from results. You can now re-enter the correct scores.`);
+  };
 
   // Global function to process tie breaker results
   window.processTieBreaker = function(tieBreakerIndex, teams) {
@@ -229,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Update rankings with tie breaker results
     Object.entries(tieBreakerResults).forEach(([team, points]) => {
       rankings[team].points += points;
-      // Optionally add a small bonus to wins for tie breaker winner
+      // Add a small bonus to wins for tie breaker winner
       if (teams.length === 2) {
         const otherTeam = teams.find(t => t !== team);
         if (points > tieBreakerResults[otherTeam]) {
