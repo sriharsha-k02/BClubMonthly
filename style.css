@@ -6,7 +6,7 @@ body {
 }
 
 .container {
-  max-width: 700px;
+  max-width: 800px; /* Increased width to accommodate Action column */
   margin: auto;
   background: white;
   padding: 20px;
@@ -16,6 +16,12 @@ body {
 
 h1, h2 {
   text-align: center;
+  color: #333;
+}
+
+h1 {
+  color: #0078D4;
+  margin-bottom: 30px;
 }
 
 .form-group {
@@ -25,12 +31,22 @@ h1, h2 {
 label {
   display: block;
   margin-bottom: 5px;
+  font-weight: 600;
+  color: #555;
 }
 
 input, select, button {
   width: 100%;
   padding: 8px;
   box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: #0078D4;
+  box-shadow: 0 0 5px rgba(0, 120, 212, 0.3);
 }
 
 button {
@@ -38,19 +54,242 @@ button {
   color: white;
   border: none;
   cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+  border-radius: 5px;
 }
 
 button:hover {
   background-color: #005A9E;
 }
 
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  text-align: center;
+}
+
+td {
+  text-align: center;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: #f0f8ff;
+}
+
+/* Top 4 teams highlighting */
+#rankingsTable tr.top-4 {
+  background-color: #e8f5e8 !important;
+  font-weight: 600;
+}
+
+/* Re-enter button styling */
+.re-enter-btn {
+  padding: 4px 8px;
+  background: #ffc107;
+  color: #000;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.re-enter-btn:hover {
+  background: #e0a800;
+}
+
+/* Status indicators */
+.status-played {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Tie breaker section styling */
+.tie-breaker-section {
+  background: #fff3cd;
+  border: 2px solid #ffeaa7;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tie-breaker-section h3 {
+  margin-top: 0;
+  color: #856404;
+}
+
+.tie-breaker-section h4 {
+  color: #533f03;
+  border-bottom: 1px solid #ffeaa7;
+  padding-bottom: 5px;
+}
+
+.tie-breaker-match {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 5px;
+  border: 1px solid #e9ecef;
+}
+
+.tie-breaker-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.tie-breaker-inputs > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.tie-breaker-inputs label {
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.tie-breaker-inputs input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tie-breaker-submit {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #0078D4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tie-breaker-submit:hover {
+  background: #005A9E;
+}
+
+/* Warning indicators */
+.warning-indicator {
+  color: #ff6b35;
+  font-size: 14px;
+}
+
+/* Form highlighting for re-entry */
+.form-highlighted {
+  background-color: #fff3cd !important;
+  border: 2px solid #ffeaa7;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Scoreboard and winner display */
 .scoreboard div {
-  padding: 5px 0;
-  border-bottom: 1px solid #ddd;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
 }
 
 .winner {
   text-align: center;
-  font-size: 1.5em;
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #28a745;
   margin-top: 20px;
+  padding: 15px;
+  background: #d4edda;
+  border: 2px solid #c3e6cb;
+  border-radius: 8px;
+}
+
+/* Playoff section styling */
+#playoffInputs, #playoffResults {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+#playoffInputs h3, #playoffResults h3 {
+  color: #495057;
+  margin-top: 0;
+}
+
+#playoffInputs input, #playoffResults input {
+  width: auto;
+  margin: 0 10px;
+  display: inline-block;
+  min-width: 80px;
+}
+
+#playoffInputs label, #playoffResults label {
+  display: inline-block;
+  margin: 0 5px;
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    max-width: 95%;
+    padding: 15px;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 6px;
+  }
+  
+  .tie-breaker-inputs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  #playoffInputs input, #playoffResults input {
+    width: 100%;
+    margin: 5px 0;
+  }
+  
+  #playoffInputs label, #playoffResults label {
+    display: block;
+    margin: 10px 0 5px 0;
+  }
 }
