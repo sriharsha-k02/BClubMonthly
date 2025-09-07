@@ -211,9 +211,10 @@ function updateRankings() {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = index + 1;
         row.insertCell(1).textContent = entry[0];
+        row.insertCell(4).textContent = entry[1].gamesPlayed;
         row.insertCell(2).textContent = entry[1].wins;
         row.insertCell(3).textContent = entry[1].totalPoints;
-        row.insertCell(4).textContent = entry[1].gamesPlayed;
+        
         
         // Highlight top 8
         if (index < 8) {
