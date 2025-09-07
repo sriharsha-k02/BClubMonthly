@@ -1,6 +1,7 @@
 // Tournament data
-const groupA = ['Ashok-Uday', 'Althaf-Ravi', 'Hari-Sai','Murali-Hemanth', 'Mustafa-Shanu', 'Raj-Harsha'];
+const groupA = ['Ashok-Uday', 'Althaf-Ravi', 'Hari-Sai', 'Murali-Hemanth', 'Mustafa-Shanu', 'Raj-Harsha'];
 const groupB = ['Balaji-Venkat', 'Manoj-Vinoth', 'Rahul-Sabari', 'Senthilvel-Vijay', 'Suresh-Ramesh', 'Vidya-Rajesh'];
+
 
 let matchResults = [];
 let teamStats = {};
@@ -211,9 +212,9 @@ function updateRankings() {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = index + 1;
         row.insertCell(1).textContent = entry[0];
-        row.insertCell(4).textContent = entry[1].gamesPlayed;
-        row.insertCell(2).textContent = entry[1].wins;
-        row.insertCell(3).textContent = entry[1].totalPoints;
+        row.insertCell(2).textContent = entry[1].gamesPlayed;
+        row.insertCell(3).textContent = entry[1].wins;
+        row.insertCell(4).textContent = entry[1].totalPoints;
         
         
         // Highlight top 8
