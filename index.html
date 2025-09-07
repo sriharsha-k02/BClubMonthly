@@ -1,76 +1,322 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BClub Monthly Tournament</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton Tournament Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+        
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .form-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            font-weight: bold;
+            color: #555;
+            min-width: 100px;
+        }
+        
+        select, input, button {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus, input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .ranking-table .top8 {
+            background-color: #d4edda !important;
+            font-weight: bold;
+        }
+        
+        .tie-breaker {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .winner-announcement {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border-radius: 10px;
+            margin-top: 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .match-result {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background: #e9ecef;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .knockout-match {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        
+        .teams-setup {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .group {
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .group h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .team-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .team-list li {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>BClub Monthly Tournament</h1>
+    <div class="container">
+        <h1>🏸 Badminton Tournament Manager</h1>
+        
+        <!-- Teams Display -->
+        <div class="teams-setup">
+            <div class="group">
+                <h3>Group A Teams</h3>
+                <ul class="team-list" id="groupAList"></ul>
+            </div>
+            <div class="group">
+                <h3>Group B Teams</h3>
+                <ul class="team-list" id="groupBList"></ul>
+            </div>
+        </div>
+        
+        <!-- League Stage -->
+        <div class="section" id="leagueSection">
+            <h2>🏆 League Stage - Inter-Group Matches</h2>
+            <div class="form-group">
+                <div class="form-group">
+                     <label>Team A (Group A):</label>
+                <select id="teamA"></select>
 
-    <form id="resultForm">
-      <div class="form-group">
-        <label for="teamA">Team A:</label>
-        <select id="teamA" required></select>
-      </div>
+                <label>Team A Points:</label>
+                <input type="number" id="pointsA" min="0" placeholder="Points">
+                </div>
+               
+                <div class="form-group"> 
+                     <label>Team B (Group B):</label>
+                <select id="teamB"></select>
+                
+                <label>Team B Points:</label>
+                <input type="number" id="pointsB" min="0" placeholder="Points">
+                </div>
+               
+                
+                <button onclick="submitMatch()">Submit Match</button>
+            </div>
+            
+            <div id="matchResults">
+                <h3>Match Results</h3>
+                <table id="resultsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Team A</th>
+                            <th>Team B</th>
+                            <th>Score</th>
+                            <th>Winner</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Rankings -->
+        <div class="section" id="rankingsSection" style="display: none;">
+            <h2>📊 Team Rankings</h2>
+            <table id="rankingsTable" class="ranking-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team</th>
+                        <th>Wins</th>
+                        <th>Total Points</th>
+                        <th>Games Played</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingsBody"></tbody>
+            </table>
+        </div>
+        
+        <!-- Tie Breaker -->
+        <div class="section tie-breaker" id="tieBreakerSection" style="display: none;">
+            <h2>⚡ Tie Breaker Matches</h2>
+            <p>The following teams are tied and need to play additional matches to determine final rankings:</p>
+            <div id="tieBreakerMatches"></div>
+        </div>
+        
+        <!-- Knockout Stage -->
+        <div class="section" id="knockoutSection" style="display: none;">
+            <h2>🥊 Knockout Stage</h2>
+            
+            <!-- Quarterfinals -->
+            <div id="quarterfinalsSection">
+                <h3>Quarterfinals</h3>
+                <div id="quarterfinalMatches"></div>
+            </div>
+            
+            <!-- Semifinals -->
+            <div id="semifinalsSection" style="display: none;">
+                <h3>Semifinals</h3>
+                <div id="semifinalMatches"></div>
+            </div>
+            
+            <!-- Finals -->
+            <div id="finalsSection" style="display: none;">
+                <h3>3rd Place & Final</h3>
+                <div id="finalMatches"></div>
+            </div>
+        </div>
+        
+        <!-- Winner -->
+        <div id="winnerSection" style="display: none;" class="winner-announcement">
+            <h2>🏆 Tournament Results 🏆</h2>
+            <div id="finalResults"></div>
+        </div>
+    </div>
 
-      <div class="form-group">
-        <label for="teamB">Team B:</label>
-        <select id="teamB" required></select>
-      </div>
-
-      <div class="form-group">
-        <label for="teamAPoints">Team A Points:</label>
-        <input type="number" id="teamAPoints" required />
-      </div>
-
-      <div class="form-group">
-        <label for="teamBPoints">Team B Points:</label>
-        <input type="number" id="teamBPoints" required />
-      </div>
-
-      <button type="submit">Submit Result</button>
-    </form>
-
-    <h2>Matches</h2>
-    <table id="matchesTable">
-      <thead>
-        <tr>
-          <th>Team A</th>
-          <th>Team B</th>
-          <th>Score</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <h2>Rankings</h2>
-    <table id="rankingsTable">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Team</th>
-          <th>Wins</th>
-          <th>Losses</th>
-          <th>Points</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <h2>Playoffs</h2>
-    <button id="startPlayoffs">Start Playoffs</button>
-    <div id="playoffInputs"></div>
-    <div id="playoffResults"></div>
-
-    <h2 id="finalWinner" class="winner"></h2>
-  </div>
-
-  <!-- Keep script at the very end -->
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
