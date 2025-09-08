@@ -1050,7 +1050,8 @@
             }
         }
 
-        function checkForMoreTies() {
+        function checkAllTieBreakersComplete() {
+            // Get current rankings with tie-breaker results applied
             const rankings = Object.entries(teamStats)
                 .sort((a, b) => {
                     if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
@@ -1061,36 +1062,85 @@
                     return 0;
                 });
             
-            // Check if there are still ties affecting top 8
+            console.log('Checking if all tie breakers are complete...');
+            console.log('Current rankings after tie-breakers:', rankings.map((r, i) => 
+                `${i+1}. ${r[0]} (W:${r[1].wins}, P:${r[1].totalPoints}, TB:${r[1].tieBreakerRank})`
+            ));
+            
+            // Check if there are any unresolved ties that still need tie-breakers
+            let hasUnresolvedTies = false;
+            
             for (let i = 0; i < Math.min(10, rankings.length - 1); i++) {
                 const current = rankings[i][1];
                 const next = rankings[i + 1][1];
                 
+                // Check if teams are still tied after tie-breakers
                 if (current.wins === next.wins && 
                     current.totalPoints === next.totalPoints &&
                     current.tieBreakerRank === next.tieBreakerRank) {
-                    // Check if this tie affects top 8 and involves same group
-                    if (i < 8 || i + 1 === 8) {
-                        const tiedTeams = [rankings[i][0]];
-                        let j = i + 1;
-                        while (j < rankings.length && 
-                               rankings[j][1].wins === current.wins &&
-                               rankings[j][1].totalPoints === current.totalPoints &&
-                               rankings[j][1].tieBreakerRank === current.tieBreakerRank) {
-                            tiedTeams.push(rankings[j][0]);
-                            j++;
-                        }
+                    
+                    // Find all teams in this tie
+                    const tiedTeams = [rankings[i][0]];
+                    let j = i + 1;
+                    while (j < rankings.length && 
+                           rankings[j][1].wins === current.wins &&
+                           rankings[j][1].totalPoints === current.totalPoints &&
+                           rankings[j][1].tieBreakerRank === current.tieBreakerRank) {
+                        tiedTeams.push(rankings[j][0]);
+                        j++;
+                    }
+                    
+                    const startPosition = i + 1;
+                    const endPosition = j;
+                    const crossesTop8Boundary = startPosition <= 8 && endPosition > 8;
+                    const hasSameGroupTeams = checkSameGroupInTie(tiedTeams);
+                    const affectsTop8 = startPosition <= 10;
+                    
+                    // Check if this tie needs a tie-breaker and hasn't been resolved yet
+                    if (affectsTop8 && (crossesTop8Boundary || hasSameGroupTeams)) {
+                        // Check if tie-breaker matches exist for these teams
+                        const hasAllTieBreakers = checkTieBreakersExistForTeams(tiedTeams);
                         
-                        if (checkSameGroupInTie(tiedTeams)) {
-                            tieBreakerProcessed = false;
-                            checkForTieBreakers();
-                            return true;
+                        if (!hasAllTieBreakers) {
+                            console.log(`Found unresolved tie that needs tie-breaker: ${tiedTeams.join(', ')}`);
+                            hasUnresolvedTies = true;
+                            
+                            // Create tie-breaker for this specific group
+                            createTieBreaker(tiedTeams, startPosition);
+                            break;
+                        } else {
+                            console.log(`Tie exists but tie-breakers already completed: ${tiedTeams.join(', ')}`);
                         }
                     }
+                    
+                    i = j - 1; // Skip the teams we just processed
                 }
             }
             
-            return false;
+            if (!hasUnresolvedTies) {
+                console.log('All tie breakers complete, starting knockout stage');
+                startKnockoutStage();
+            }
+        }
+
+        function checkTieBreakersExistForTeams(teams) {
+            // Check if all required tie-breaker matches exist for these teams
+            for (let i = 0; i < teams.length; i++) {
+                for (let j = i + 1; j < teams.length; j++) {
+                    const teamA = teams[i];
+                    const teamB = teams[j];
+                    
+                    const hasMatch = tieBreakerResults.some(tb =>
+                        (tb.teamA === teamA && tb.teamB === teamB) ||
+                        (tb.teamA === teamB && tb.teamB === teamA)
+                    );
+                    
+                    if (!hasMatch) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         function startKnockoutStage() {
