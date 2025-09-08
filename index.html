@@ -205,6 +205,102 @@
             border-radius: 5px;
             border-left: 3px solid #667eea;
         }
+        
+        /* New styles for updated features */
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 0 3px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        
+        .head-to-head {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .tie-breaker-tag {
+            background-color: #fd7e14;
+            color: white;
+        }
+        
+        .remaining-match {
+            background-color: #fff8dc !important;
+            font-style: italic;
+            opacity: 0.7;
+        }
+        
+        .played-match {
+            background-color: white;
+        }
+        
+        .separator-row {
+            background-color: #495057 !important;
+            color: white !important;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .separator-row td {
+            padding: 15px;
+            border-top: 2px solid #495057;
+            border-bottom: 2px solid #495057;
+        }
+        
+        .edit-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .edit-btn:hover {
+            background-color: #e9ecef;
+            transform: none;
+        }
+        
+        .match-status-table th {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+        }
+        
+        .status-cell {
+            min-width: 150px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .teams-setup {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-group label {
+                min-width: auto;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 8px 4px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -229,43 +325,67 @@
             <div class="form-group">
                 <div class="form-group">
                      <label>Team A (Group A):</label>
-                <select id="teamA"></select>
+                    <select id="teamA">
+                        <option value="">Select Team A</option>
+                    </select>
 
-                <label>Team A Points:</label>
-                <input type="number" id="pointsA" min="0" placeholder="Points">
+                    <label>Team A Points:</label>
+                    <input type="number" id="pointsA" min="0" placeholder="Points">
                 </div>
                
                 <div class="form-group"> 
                      <label>Team B (Group B):</label>
-                <select id="teamB"></select>
+                    <select id="teamB">
+                        <option value="">Select Team B</option>
+                    </select>
                 
-                <label>Team B Points:</label>
-                <input type="number" id="pointsB" min="0" placeholder="Points">
+                    <label>Team B Points:</label>
+                    <input type="number" id="pointsB" min="0" placeholder="Points">
                 </div>
                
-                
                 <button id="Submit" onclick="submitMatch()">Submit Match</button>
             </div>
-            
-            <div id="matchResults">
-                <h3>Match Results</h3>
-                <table id="resultsTable" style="display: none;">
-                    <thead>
-                        <tr>
-                            <th>Team A</th>
-                            <th>Team B</th>
-                            <th>Score</th>
-                            <th>Winner</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody"></tbody>
-                </table>
-            </div>
+        </div>
+
+        <!-- Match Status Table -->
+        <div class="section" id="matchStatusSection">
+            <h2>📋 Match Status</h2>
+            <table id="matchStatusTable" class="match-status-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Team A</th>
+                        <th>Team B</th>
+                        <th>Score</th>
+                        <th>Winner</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="matchStatusBody"></tbody>
+            </table>
+        </div>
+        
+        <!-- Match Results -->
+        <div class="section" id="matchResultsSection" style="display: none;">
+            <h2>🎯 Recent Match Results</h2>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Team A</th>
+                        <th>Team B</th>
+                        <th>Score</th>
+                        <th>Winner</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
         </div>
         
         <!-- Rankings -->
         <div class="section" id="rankingsSection" style="display: none;">
             <h2>📊 Team Rankings</h2>
+            <p style="margin-bottom: 15px; color: #666; font-style: italic;">
+                Top 8 teams (highlighted in green) qualify for knockout stage
+            </p>
             <table id="rankingsTable" class="ranking-table">
                 <thead>
                     <tr>
@@ -273,7 +393,8 @@
                         <th>Team</th>
                         <th>Games Played</th>
                         <th>Wins</th>
-                        <th>Total Points</th> 
+                        <th>Total Points</th>
+                        <th class="status-cell">Status</th>
                     </tr>
                 </thead>
                 <tbody id="rankingsBody"></tbody>
@@ -283,7 +404,9 @@
         <!-- Tie Breaker -->
         <div class="section tie-breaker" id="tieBreakerSection" style="display: none;">
             <h2>⚡ Tie Breaker Matches</h2>
-            <p>The following teams are tied and need to play additional matches to determine final rankings:</p>
+            <p style="margin-bottom: 15px; color: #666;">
+                The following teams are tied and need to play additional matches to determine final rankings:
+            </p>
             <div id="tieBreakerMatches"></div>
         </div>
         
@@ -293,7 +416,10 @@
             
             <!-- Quarterfinals -->
             <div id="quarterfinalsSection">
-                <h3>Quarterfinals</h3>
+                <h3>Quarterfinals (Top 8 Teams)</h3>
+                <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
+                    1 vs 8, 2 vs 7, 3 vs 6, 4 vs 5
+                </p>
                 <div id="quarterfinalMatches"></div>
             </div>
             
