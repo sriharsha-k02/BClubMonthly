@@ -1,6 +1,6 @@
 // Tournament data
-const groupA = ['Ashok-Uday', 'Althaf-Ravi', 'Hari-Sai', 'Murali-Hemanth', 'Mustafa-Shanu', 'Raj-Harsha'];
-const groupB = ['Balaji-Venkat', 'Manoj-Vinoth', 'Rahul-Sabari', 'Senthilvel-Vijay', 'Suresh-Ramesh', 'Vidya-Rajesh'];
+const groupA = ['Ashok-Uday', 'Althaf-Ravi', 'Hari-Sai', 'Murali-Hemanth', 'Mustafa-Shanu', 'Raj-Harsha','Bhaskar-Sumanth'];
+const groupB = ['Balaji-Venkat', 'Manoj-Vinoth', 'Rahul-Sabari', 'Senthilvel-Vijay', 'Suresh-Ramesh', 'Vidya-Rajesh','Digvijay-Moorthy'];
 
 let matchResults = [];
 let teamStats = {};
@@ -12,24 +12,256 @@ let knockoutResults = {
     thirdPlace: null
 };
 
+// Storage keys
+const STORAGE_KEYS = {
+    MATCH_RESULTS: 'tournament_match_results',
+    TEAM_STATS: 'tournament_team_stats',
+    TIE_BREAKER_MATCHES: 'tournament_tie_breaker_matches',
+    KNOCKOUT_RESULTS: 'tournament_knockout_results',
+    TOURNAMENT_STATE: 'tournament_state'
+};
+
+// Save data to localStorage
+function saveToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEYS.MATCH_RESULTS, JSON.stringify(matchResults));
+        localStorage.setItem(STORAGE_KEYS.TEAM_STATS, JSON.stringify(teamStats));
+        localStorage.setItem(STORAGE_KEYS.TIE_BREAKER_MATCHES, JSON.stringify(tieBreakerMatches));
+        localStorage.setItem(STORAGE_KEYS.KNOCKOUT_RESULTS, JSON.stringify(knockoutResults));
+        
+        // Save current tournament state
+        const tournamentState = {
+            leagueComplete: matchResults.length === 49,
+            tieBreakerActive: document.getElementById('tieBreakerSection')?.style.display === 'block',
+            knockoutActive: document.getElementById('knockoutSection')?.style.display === 'block',
+            tournamentComplete: document.getElementById('winnerSection')?.style.display === 'block'
+        };
+        localStorage.setItem(STORAGE_KEYS.TOURNAMENT_STATE, JSON.stringify(tournamentState));
+        
+        console.log('Data saved to localStorage');
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+    }
+}
+
+// Load data from localStorage
+function loadFromStorage() {
+    try {
+        const savedMatchResults = localStorage.getItem(STORAGE_KEYS.MATCH_RESULTS);
+        const savedTeamStats = localStorage.getItem(STORAGE_KEYS.TEAM_STATS);
+        const savedTieBreakerMatches = localStorage.getItem(STORAGE_KEYS.TIE_BREAKER_MATCHES);
+        const savedKnockoutResults = localStorage.getItem(STORAGE_KEYS.KNOCKOUT_RESULTS);
+        const savedTournamentState = localStorage.getItem(STORAGE_KEYS.TOURNAMENT_STATE);
+        
+        if (savedMatchResults) {
+            matchResults = JSON.parse(savedMatchResults);
+            console.log(`Loaded ${matchResults.length} match results`);
+        }
+        
+        if (savedTeamStats) {
+            teamStats = JSON.parse(savedTeamStats);
+            console.log('Loaded team stats');
+        }
+        
+        if (savedTieBreakerMatches) {
+            tieBreakerMatches = JSON.parse(savedTieBreakerMatches);
+            console.log('Loaded tie-breaker matches');
+        }
+        
+        if (savedKnockoutResults) {
+            knockoutResults = JSON.parse(savedKnockoutResults);
+            console.log('Loaded knockout results');
+        }
+        
+        if (savedTournamentState) {
+            const state = JSON.parse(savedTournamentState);
+            console.log('Loaded tournament state:', state);
+            return state;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error loading from localStorage:', error);
+        return null;
+    }
+}
+
+// Clear all saved data
+function clearStorage() {
+    try {
+        Object.values(STORAGE_KEYS).forEach(key => {
+            localStorage.removeItem(key);
+        });
+        console.log('All tournament data cleared from localStorage');
+    } catch (error) {
+        console.error('Error clearing localStorage:', error);
+    }
+}
+
+// Reset tournament (with confirmation)
+function resetTournament() {
+    if (matchResults.length > 0 || Object.keys(teamStats).length > 0) {
+        const confirmation = confirm('Are you sure you want to reset the entire tournament? This will delete all match results and progress.');
+        if (!confirmation) return;
+    }
+    
+    // Clear data
+    matchResults = [];
+    teamStats = {};
+    tieBreakerMatches = [];
+    knockoutResults = {
+        quarterfinals: [],
+        semifinals: [],
+        final: null,
+        thirdPlace: null
+    };
+    
+    // Clear storage
+    clearStorage();
+    
+    // Reset UI
+    document.getElementById('tieBreakerSection').style.display = 'none';
+    document.getElementById('knockoutSection').style.display = 'none';
+    document.getElementById('winnerSection').style.display = 'none';
+    document.getElementById('leagueSection').style.display = 'block';
+    
+    // Reinitialize
+    init();
+    
+    alert('Tournament has been reset!');
+}
+
 // Initialize tournament
 function init() {
     console.log('Initializing tournament...');
     
-    // Initialize team stats
-    [...groupA, ...groupB].forEach(team => {
-        teamStats[team] = {
-            wins: 0,
-            totalPoints: 0,
-            gamesPlayed: 0,
-            opponents: [],
-            group: groupA.includes(team) ? 'A' : 'B'
-        };
-    });
+    // Try to load existing data
+    const savedState = loadFromStorage();
+    
+    // Initialize team stats if not loaded from storage
+    if (Object.keys(teamStats).length === 0) {
+        [...groupA, ...groupB].forEach(team => {
+            teamStats[team] = {
+                wins: 0,
+                totalPoints: 0,
+                gamesPlayed: 0,
+                opponents: [],
+                group: groupA.includes(team) ? 'A' : 'B'
+            };
+        });
+    }
     
     populateTeamLists();
     populateDropdowns();
     updateMatchStatusTable();
+    
+    // Restore tournament state if data was loaded
+    if (savedState && matchResults.length > 0) {
+        updateMatchResults();
+        updateRankings();
+        updateAvailableMatches();
+        
+        // Restore UI state based on saved state
+        if (savedState.tournamentComplete) {
+            restoreKnockoutState();
+            displayFinalResults();
+        } else if (savedState.knockoutActive) {
+            restoreKnockoutState();
+        } else if (savedState.tieBreakerActive) {
+            restoreTieBreakerState();
+        } else if (savedState.leagueComplete) {
+            checkForTieBreakers();
+        }
+        
+        console.log('Tournament state restored from saved data');
+    }
+}
+
+// Restore knockout state
+function restoreKnockoutState() {
+    document.getElementById('knockoutSection').style.display = 'block';
+    document.getElementById('leagueSection').style.display = 'none';
+    
+    // Restore quarterfinals
+    if (knockoutResults.quarterfinals.length > 0) {
+        const qfContainer = document.getElementById('quarterfinalMatches');
+        qfContainer.innerHTML = '';
+        
+        knockoutResults.quarterfinals.forEach((match, index) => {
+            if (match) {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'knockout-match';
+                matchDiv.innerHTML = `
+                    <span>QF${index + 1}: ${match.teamA} vs ${match.teamB} | Score: ${match.pointsA} - ${match.pointsB} | Winner: ${match.winner}</span>
+                    <div>
+                        <button class="edit-btn" onclick="editQuarterfinal(${index})" title="Edit match">✏️</button>
+                    </div>
+                `;
+                qfContainer.appendChild(matchDiv);
+            }
+        });
+    }
+    
+    // Restore semifinals if they exist
+    if (knockoutResults.semifinals.length > 0 && knockoutResults.semifinals.filter(sf => sf).length > 0) {
+        document.getElementById('semifinalsSection').style.display = 'block';
+        const sfContainer = document.getElementById('semifinalMatches');
+        sfContainer.innerHTML = '';
+        
+        knockoutResults.semifinals.forEach((match, index) => {
+            if (match) {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'knockout-match';
+                matchDiv.innerHTML = `
+                    <span>SF${index + 1}: ${match.teamA} vs ${match.teamB} | Score: ${match.pointsA} - ${match.pointsB} | Winner: ${match.winner}</span>
+                    <div>
+                        <button class="edit-btn" onclick="editSemifinal(${index})" title="Edit match">✏️</button>
+                    </div>
+                `;
+                sfContainer.appendChild(matchDiv);
+            }
+        });
+    }
+    
+    // Restore finals if they exist
+    if (knockoutResults.final || knockoutResults.thirdPlace) {
+        document.getElementById('finalsSection').style.display = 'block';
+        const container = document.getElementById('finalMatches');
+        container.innerHTML = '';
+        
+        if (knockoutResults.thirdPlace) {
+            const thirdDiv = document.createElement('div');
+            thirdDiv.className = 'knockout-match';
+            thirdDiv.id = 'thirdPlaceMatch';
+            thirdDiv.innerHTML = `
+                <span>3rd Place: ${knockoutResults.thirdPlace.teamA} vs ${knockoutResults.thirdPlace.teamB} | Score: ${knockoutResults.thirdPlace.pointsA} - ${knockoutResults.thirdPlace.pointsB} | Winner: ${knockoutResults.thirdPlace.winner}</span>
+                <div>
+                    <button class="edit-btn" onclick="editThirdPlace()" title="Edit match">✏️</button>
+                </div>
+            `;
+            container.appendChild(thirdDiv);
+        }
+        
+        if (knockoutResults.final) {
+            const finalDiv = document.createElement('div');
+            finalDiv.className = 'knockout-match';
+            finalDiv.id = 'finalMatch';
+            finalDiv.innerHTML = `
+                <span>Final: ${knockoutResults.final.teamA} vs ${knockoutResults.final.teamB} | Score: ${knockoutResults.final.pointsA} - ${knockoutResults.final.pointsB} | Winner: ${knockoutResults.final.winner}</span>
+                <div>
+                    <button class="edit-btn" onclick="editFinal()" title="Edit match">✏️</button>
+                </div>
+            `;
+            container.appendChild(finalDiv);
+        }
+    }
+}
+
+// Restore tie-breaker state
+function restoreTieBreakerState() {
+    // This would need the same logic as createTieBreakers but with saved data
+    // For now, we'll just trigger the tie-breaker check again
+    checkForTieBreakers();
 }
 
 function populateTeamLists() {
@@ -166,6 +398,11 @@ function updateMatchStatusTable() {
     });
     
     document.getElementById('matchStatusTable').style.display = 'table';
+    
+    // Update progress indicator
+    const totalMatches = getAllPossibleMatches().length;
+    const playedCount = matchResults.length;
+    console.log(`Progress: ${playedCount}/${totalMatches} matches played`);
 }
 
 function submitMatch() {
@@ -230,11 +467,14 @@ function submitMatch() {
     updateAvailableMatches();
     updateMatchStatusTable();
     
-    console.log(`Match completed: ${teamA} ${pointsA} - ${pointsB} ${teamB}, Winner: ${winner}`);
-    console.log(`Total matches played: ${matchResults.length}/36`);
+    // Save to storage
+    saveToStorage();
     
-    // Check if league stage is complete
-    if (matchResults.length === 36) {
+    console.log(`Match completed: ${teamA} ${pointsA} - ${pointsB} ${teamB}, Winner: ${winner}`);
+    console.log(`Total matches played: ${matchResults.length}/49`);
+    
+    // Check if league stage is complete (updated to 49 matches)
+    if (matchResults.length === 49) {
         console.log('All league matches completed!');
         checkForTieBreakers();
     }
@@ -332,6 +572,7 @@ function checkForTieBreakers() {
     
     if (tieBreakerGroups.length > 0) {
         createTieBreakers(tieBreakerGroups);
+        saveToStorage(); // Save tie-breaker state
     } else {
         console.log('No tie-breakers needed, starting knockouts');
         startKnockouts();
@@ -445,6 +686,7 @@ function submitAllTieBreakers() {
     
     // Update rankings and start knockouts
     updateRankings();
+    saveToStorage(); // Save after tie-breakers
     console.log('Tie-breakers processed, starting knockouts');
     
     setTimeout(() => {
@@ -525,6 +767,7 @@ function startKnockouts() {
     };
     
     createQuarterfinals(top8);
+    saveToStorage(); // Save knockout start state
 }
 
 function createQuarterfinals(top8) {
@@ -578,6 +821,8 @@ function submitQuarterfinal(matchIndex, teamA, teamB) {
         </div>
     `;
     
+    saveToStorage(); // Save after each match
+    
     // Check if all quarterfinals complete
     const completedQFs = knockoutResults.quarterfinals.filter(qf => qf).length;
     if (completedQFs === 4) {
@@ -624,6 +869,8 @@ function editQuarterfinal(matchIndex) {
     knockoutResults.semifinals = [];
     knockoutResults.final = null;
     knockoutResults.thirdPlace = null;
+    
+    saveToStorage(); // Save after edit
     
     // Check if all quarterfinals still complete
     const completedQFs = knockoutResults.quarterfinals.filter(qf => qf).length;
@@ -685,6 +932,8 @@ function submitSemifinal(matchIndex, teamA, teamB) {
         </div>
     `;
     
+    saveToStorage(); // Save after each match
+    
     // Check if both semifinals complete
     const completedSFs = knockoutResults.semifinals.filter(sf => sf).length;
     if (completedSFs === 2) {
@@ -730,6 +979,8 @@ function editSemifinal(matchIndex) {
     document.getElementById('winnerSection').style.display = 'none';
     knockoutResults.final = null;
     knockoutResults.thirdPlace = null;
+    
+    saveToStorage(); // Save after edit
     
     const completedSFs = knockoutResults.semifinals.filter(sf => sf).length;
     if (completedSFs === 2) {
@@ -789,6 +1040,7 @@ function submitThirdPlace(teamA, teamB) {
         </div>
     `;
     
+    saveToStorage(); // Save after match
     checkTournamentComplete();
 }
 
@@ -825,6 +1077,7 @@ function editThirdPlace() {
         </div>
     `;
     
+    saveToStorage(); // Save after edit
     checkTournamentComplete();
 }
 
@@ -853,6 +1106,7 @@ function submitFinal(teamA, teamB) {
         </div>
     `;
     
+    saveToStorage(); // Save after match
     checkTournamentComplete();
 }
 
@@ -889,6 +1143,7 @@ function editFinal() {
         </div>
     `;
     
+    saveToStorage(); // Save after edit
     checkTournamentComplete();
 }
 
@@ -928,6 +1183,8 @@ function displayFinalResults() {
     
     winnerSection.style.display = 'block';
     winnerSection.scrollIntoView({ behavior: 'smooth' });
+    
+    saveToStorage(); // Save final state
     
     console.log('Tournament completed!');
     console.log('Final results:', { champion, runnerUp, thirdPlace, fourthPlace });
@@ -991,13 +1248,16 @@ function editMatch(matchIndex) {
     updateRankings();
     updateMatchStatusTable();
     
+    // Save changes
+    saveToStorage();
+    
     // Hide knockout/tie-breaker sections as they may need recalculation
     document.getElementById('tieBreakerSection').style.display = 'none';
     document.getElementById('knockoutSection').style.display = 'none';
     document.getElementById('winnerSection').style.display = 'none';
     
-    // Check if league stage is complete
-    if (matchResults.length === 36) {
+    // Check if league stage is complete (updated to 49 matches)
+    if (matchResults.length === 49) {
         checkForTieBreakers();
     }
 }
@@ -1037,11 +1297,47 @@ function forceStartKnockouts() {
     };
     
     createQuarterfinals(top8);
+    saveToStorage(); // Save debug state
+}
+
+// Add UI controls for persistence
+function addPersistenceControls() {
+    // Create a control panel div
+    const controlPanel = document.createElement('div');
+    controlPanel.id = 'persistenceControls';
+    controlPanel.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 1000;
+        font-size: 12px;
+    `;
+    
+    controlPanel.innerHTML = `
+        <div style="margin-bottom: 5px;"><strong>Tournament Controls</strong></div>
+        <button onclick="resetTournament()" style="margin: 2px; padding: 5px 8px; font-size: 11px; background: #ff4444; color: white; border: none; border-radius: 3px;">Reset Tournament</button><br>
+        <button onclick="saveToStorage()" style="margin: 2px; padding: 5px 8px; font-size: 11px; background: #4444ff; color: white; border: none; border-radius: 3px;">Save Progress</button><br>
+        <button onclick="forceStartKnockouts()" style="margin: 2px; padding: 5px 8px; font-size: 11px; background: #ff8800; color: white; border: none; border-radius: 3px;">Debug: Force KO</button>
+        <div style="margin-top: 5px; font-size: 10px; opacity: 0.7;">
+            Progress auto-saves<br>
+            Total matches: ${getAllPossibleMatches().length}
+        </div>
+    `;
+    
+    document.body.appendChild(controlPanel);
 }
 
 // Initialize when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Tournament app loading...');
+    console.log('Enhanced Tournament app loading...');
     init();
-    console.log('Tournament app loaded successfully!');
+    addPersistenceControls(); // Add the control panel
+    console.log('Enhanced Tournament app loaded successfully!');
+    console.log(`Tournament setup: ${groupA.length} teams in Group A, ${groupB.length} teams in Group B`);
+    console.log(`Total matches to play: ${groupA.length * groupB.length} (${groupA.length}x${groupB.length})`);
 });
