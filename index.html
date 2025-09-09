@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BadmintoN Tournament Manager</title>
+    <title>Dabidi Dibidi Tournament</title>
     <style>
         * {
             margin: 0;
@@ -141,6 +142,28 @@
             margin: 15px 0;
         }
         
+        .tie-breaker-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        
+        .tie-breaker-input-row div {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .tie-breaker-input-row input {
+            width: 80px;
+            padding: 5px 8px;
+        }
+        
         .winner-announcement {
             text-align: center;
             padding: 20px;
@@ -216,6 +239,86 @@
             transform: none;
         }
         
+        .remaining-match {
+            background-color: #fff3cd !important;
+            opacity: 0.7;
+        }
+        
+        .played-match {
+            background-color: #d4edda !important;
+        }
+        
+        .separator-row {
+            background-color: #343a40 !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        .separator-row td {
+            text-align: center;
+            font-size: 0.9em;
+        }
+        
+        /* Progress indicator styles */
+        .progress-info {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        /* Enhanced control buttons */
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-buttons button {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333) !important;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #fd7e14, #e55a00) !important;
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496) !important;
+        }
+        
+        /* Status indicators */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-complete {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -241,21 +344,44 @@
             th, td {
                 padding: 8px 4px;
             }
+            
+            .tie-breaker-input-row {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .control-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏸 Badminton Tournament</h1>
+        <h1>🏸 BClub Tournament </h1>
+        
+        <!-- Control Panel -->
+        <div class="section">
+            <h2>🎮 Tournament Controls</h2>
+            <div class="control-buttons">
+                <button onclick="resetTournament()" class="btn-danger">🔄 Reset Tournament</button>
+                <button onclick="saveToStorage()" class="btn-info">💾 Save Progress</button>
+                <!--button onclick="forceStartKnockouts()" class="btn-warning">⚡ Debug: Force Knockouts</button-->
+            </div>
+            <!--div class="progress-info" id="tournamentProgress">
+                Tournament Progress: Loading...
+            </div-->
+        </div>
         
         <!-- Teams Display -->
         <div class="teams-setup">
             <div class="group">
-                <h3>Group A Teams</h3>
+                <h3>Group A Teams (7)</h3>
                 <ul class="team-list" id="groupAList"></ul>
             </div>
             <div class="group">
-                <h3>Group B Teams</h3>
+                <h3>Group B Teams (7)</h3>
                 <ul class="team-list" id="groupBList"></ul>
             </div>
         </div>
@@ -263,6 +389,9 @@
         <!-- League Stage -->
         <div class="section" id="leagueSection">
             <h2>🏆 League Stage - Inter-Group Matches</h2>
+            <p style="margin-bottom: 15px; color: #666; font-style: italic;">
+                Each Group A team plays against each Group B team. Total matches: 49 (7×7)
+            </p>
             <div class="form-group">
                 <div class="form-group">
                      <label>Team A (Group A):</label>
@@ -284,13 +413,18 @@
                     <input type="number" id="pointsB" min="0" placeholder="Points">
                 </div>
                
-                <button id="Submit" onclick="submitMatch()">Submit Match</button>
+                <button id="Submit" onclick="submitMatch()">📝 Submit Match</button>
             </div>
         </div>
 
         <!-- Match Status Table -->
         <div class="section" id="matchStatusSection">
-            <h2>📋 Match Status</h2>
+            <h2>📋 Match Status Overview</h2>
+            <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
+                <span class="status-badge status-pending">Yellow</span> = Not Played &nbsp;&nbsp;
+                <span class="status-badge status-complete">Green</span> = Completed &nbsp;&nbsp;
+                Click ✏️ to edit completed matches
+            </p>
             <table id="matchStatusTable" style="display: none;">
                 <thead>
                     <tr>
@@ -325,7 +459,8 @@
         <div class="section" id="rankingsSection" style="display: none;">
             <h2>📊 Team Rankings</h2>
             <p style="margin-bottom: 15px; color: #666; font-style: italic;">
-                Top 8 teams (highlighted in green) qualify for knockout stage
+                <span class="status-badge status-complete">Top 8 teams</span> (highlighted in green) qualify for knockout stage. 
+                Ranking: 1st by wins, 2nd by total points, 3rd by tie-breakers if needed.
             </p>
             <table id="rankingsTable" class="ranking-table">
                 <thead>
@@ -346,34 +481,44 @@
         <div class="section tie-breaker" id="tieBreakerSection" style="display: none;">
             <h2>⚡ Tie Breaker Matches</h2>
             <p style="margin-bottom: 15px; color: #666;">
-                The following teams are tied and need to play additional matches to determine final rankings for top 8 positions:
+                The following teams are tied and need to play additional matches to determine final rankings for top 8 positions.
+                <strong>These matches cannot end in ties!</strong>
             </p>
             <div id="tieBreakerMatches"></div>
-            <button onclick="submitAllTieBreakers()">Submit All Tie-Breakers</button>
+            <button onclick="submitAllTieBreakers()" style="margin-top: 15px;">🚀 Submit All Tie-Breakers</button>
         </div>
         
         <!-- Knockout Stage -->
         <div class="section" id="knockoutSection" style="display: none;">
             <h2>🥊 Knockout Stage</h2>
+            <p style="margin-bottom: 20px; color: #666; font-style: italic;">
+                Single elimination format. All matches must have a winner (no ties allowed).
+            </p>
             
             <!-- Quarterfinals -->
             <div id="quarterfinalsSection">
-                <h3>Quarterfinals (Top 8 Teams)</h3>
+                <h3>🎯 Quarterfinals (Top 8 Teams)</h3>
                 <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
-                    1 vs 8, 2 vs 7, 3 vs 6, 4 vs 5
+                    Seeding: 1st vs 8th, 2nd vs 7th, 3rd vs 6th, 4th vs 5th
                 </p>
                 <div id="quarterfinalMatches"></div>
             </div>
             
             <!-- Semifinals -->
             <div id="semifinalsSection" style="display: none;">
-                <h3>Semifinals</h3>
+                <h3>🔥 Semifinals</h3>
+                <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
+                    Winners advance to final, losers play for 3rd place
+                </p>
                 <div id="semifinalMatches"></div>
             </div>
             
             <!-- Finals -->
             <div id="finalsSection" style="display: none;">
-                <h3>3rd Place & Final</h3>
+                <h3>👑 Championship Matches</h3>
+                <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
+                    3rd place playoff and championship final
+                </p>
                 <div id="finalMatches"></div>
             </div>
         </div>
@@ -382,8 +527,17 @@
         <div id="winnerSection" style="display: none;" class="winner-announcement">
             <h2>🏆 Tournament Results 🏆</h2>
             <div id="finalResults"></div>
+            <div style="margin-top: 20px; font-size: 0.8em; opacity: 0.9;">
+                Congratulations to all participants! 🎉
+            </div>
+        </div>
+        
+        <!-- Footer Info -->
+        <div style="text-align: center; margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; color: #666; font-size: 0.9em;">
+            <strong>Tournament Manager</strong> - Auto-saves progress • 7v7 Teams • 49 Total Matches • Top 8 Knockout
         </div>
     </div>
+
 
      <script src="script.js"></script>
 
