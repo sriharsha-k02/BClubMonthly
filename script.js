@@ -1,5 +1,5 @@
 // Tournament data
-const groupA = ['Ashok-Uday', 'Althaf-Ravi', 'Hari-Sai', 'Murali-Hemanth', 'Mustafa-Shanu', 'Raj-Harsha','Bhaskar-Sumanth'];
+const groupA = ['Ashok-Raj','Harsha-Uday', 'Althaf-Ravi', 'Hari-Sai', 'Murali-Hemanth', 'Mustafa-Shanu', ,'Bhaskar-Sumanth'];
 const groupB = ['Balaji-Venkat', 'Manoj-Vinoth', 'Rahul-Sabari', 'Senthilvel-Vijay', 'Suresh-Ramesh', 'Vidya-Rajesh','Digvijay-Moorthy'];
 
 let matchResults = [];
